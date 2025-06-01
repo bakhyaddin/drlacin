@@ -1,0 +1,50 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model PatientFetch {
+  id           Int      @id @default(autoincrement())
+  patientCount Int      @default(0) @map("patient_count")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("patient_fetch")
+}
+
+model SessionCookies {
+  id        Int      @id @default(autoincrement())
+  cookies   String   @default("")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("session_cookies")
+}
+
+model AutomationToggle {
+  id        Int      @id @default(autoincrement())
+  isEnabled Boolean  @default(false) @map("is_enabled")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("automation_toggle")
+}
+
+model FetchStatus {
+  id           Int      @id @default(autoincrement())
+  lastFetch    DateTime @map("last_fetch")
+  status       String   @db.VarChar(50)
+  message      String?
+  patientCount Int      @default(0) @map("patient_count")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("fetch_statuses")
+}

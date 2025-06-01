@@ -3,25 +3,43 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build",
-    "start": "next start",
+    "build": "prisma generate && next build && tsc -p tsconfig.worker.json",
+    "dev": "concurrently \"npm run web:dev\" \"npm run worker:dev\"",
+    "start": "concurrently \"npm run web:prod\" \"npm run worker:prod\"",
+    "web:dev": "next dev",
+    "web:prod": "next start",
+    "worker:dev": "ts-node src/workers/fetch-patients.ts",
+    "worker:prod": "node dist/workers/fetch-patients.js",
+    "deploy": "vercel --prod",
     "lint": "next lint"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^1.0.0",
+    "@prisma/client": "^6.8.2",
+    "@types/cheerio": "^1.0.0",
+    "@types/qs": "^6.14.0",
+    "@upstash/qstash": "^2.8.1",
+    "@vercel/kv": "^3.0.0",
+    "cheerio": "^1.0.0",
+    "dotenv": "^16.5.0",
+    "next": "15.3.2",
+    "prisma": "^6.8.2",
+    "qs": "^6.14.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "next": "15.3.2"
+    "ts-case-convert": "^2.1.0"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4",
+    "concurrently": "^9.1.2",
     "eslint": "^9",
     "eslint-config-next": "15.3.2",
-    "@eslint/eslintrc": "^3"
+    "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5"
   }
 }
