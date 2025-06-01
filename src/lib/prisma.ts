@@ -1,4 +1,4 @@
-import { PrismaClient } from "../generated/prisma";
+import { PrismaClient } from "@prisma/generated";
 
 // Singleton pattern for Prisma client
 class DatabaseClient {

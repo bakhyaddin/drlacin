@@ -1,4 +1,7 @@
 import { assert } from "node:console";
+import { config } from "dotenv";
+
+config();
 
 const {
   BASE_URL: BASE_URL_ENV,
