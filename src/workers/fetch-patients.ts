@@ -4,7 +4,7 @@ import * as cheerio from "cheerio";
 import { get, post } from "../utils/server-request";
 
 // configs
-import { BASE_URL } from "../configs/app-vars.config";
+import { BASE_URL, USERNAME } from "../configs/app-vars.config";
 
 // lib
 import { prisma } from "../lib/prisma";
@@ -53,7 +53,7 @@ async function updateStatus(status: {
       },
     });
 
-    // Async cleanup: keep only the latest 500 records
+    // async cleanup: keep only the latest 500 records
     setImmediate(async () => {
       try {
         const totalCount = await prisma.fetchStatus.count();
@@ -62,8 +62,8 @@ async function updateStatus(status: {
           const cutoffRecord = await prisma.fetchStatus.findMany({
             select: { id: true },
             orderBy: { createdAt: "desc" },
-            skip: 499, // Skip the newest 499 records
-            take: 1, // Get the 500th record
+            skip: 499,
+            take: 1,
           });
 
           if (cutoffRecord.length > 0) {
@@ -86,7 +86,7 @@ async function updateStatus(status: {
 
     if (status.patient_count > 0) {
       // save the patient count asynchronously
-      await prisma.patientFetch.create({
+      prisma.patientFetch.create({
         data: {
           patientCount: status.patient_count,
         },
@@ -115,7 +115,7 @@ async function fetchNames(DAY: string): Promise<string[]> {
   const query = encodeURIComponent(
     JSON.stringify({
       level: 2,
-      username: "dr.lacin",
+      username: USERNAME,
       isdr: "1",
       isrp: "0",
       time: "5",
@@ -188,50 +188,28 @@ function buildBody(names: string[], DAY: string): FormData {
 }
 
 async function fetchPatients() {
-  if (!(await isAutomationEnabled())) {
-    await updateStatus({
-      status: "idle",
-      message: "Automation is disabled",
-      patient_count: 0,
-    });
-    return;
-  }
-
   try {
-    await updateStatus({
-      status: "fetching",
-      message: "Fetching patients...",
-      patient_count: 0,
-    });
-
     const DAY = getFormattedDate();
     console.log(`Fetching patients for ${DAY}...`);
 
     const names = await fetchNames(DAY);
     console.log(`→ Found ${names.length} patient(s)`);
 
-    if (names.length === 0) {
+    if (names.length > 0) {
+      console.log("Selecting all patients...");
+      const body = buildBody(names, DAY);
+      const SELECT_URL = `${BASE_URL}${SELECT_PATH}`;
+
+      await post(SELECT_URL, body, {
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+      });
+
       await updateStatus({
         status: "success",
-        message: "No patients found!",
-        patient_count: 0,
+        message: `Successfully processed ${names.length} patients`,
+        patient_count: names.length,
       });
-      return;
     }
-
-    console.log("Selecting all patients...");
-    const body = buildBody(names, DAY);
-    const SELECT_URL = `${BASE_URL}${SELECT_PATH}`;
-
-    await post(SELECT_URL, body, {
-      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-    });
-
-    await updateStatus({
-      status: "success",
-      message: `Successfully processed ${names.length} patients`,
-      patient_count: names.length,
-    });
   } catch (error) {
     console.error("Error:", error);
     await updateStatus({
